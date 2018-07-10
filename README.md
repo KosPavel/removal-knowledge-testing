@@ -1,2 +1,2 @@
 # removal-knowledge-testing
-Program for creating and providing removal workers testing, using PyQt5.
+Program for creating and providing removal knowledge testing, using PyQt5.

@@ -3,7 +3,8 @@ import sys
 
 class TestHost(QtWidgets.QWidget):
     fullTest = []
-    questionNumber = 0
+    questionNumber = 0 #всего вопросов
+    nowQuestion = 0 #сейчас первый вопрос
 
     def __init__(self):
         super().__init__()
@@ -54,16 +55,24 @@ class TestHost(QtWidgets.QWidget):
         self.createTestWindow.setWindowTitle("Создание теста")
         self.createTestWindow.resize(400,400)
 
-        self.questionNumber = QtWidgets.QLabel()
+        self.questionNumberLabel = QtWidgets.QLabel()
+        self.questionNumberLabel.setText('<center>Вопрос № ' + str(self.nowQuestion + 1) + '</center>')
         self.enterQuestion = QtWidgets.QTextEdit("Введите вопрос")
-        self.answer1 = QtWidgets.QTextEdit()
-        self.answer2 = QtWidgets.QTextEdit()
-        self.answer3 = QtWidgets.QTextEdit()
-        self.answer4 = QtWidgets.QTextEdit()
+        self.answer1 = QtWidgets.QTextEdit('Введите вариант ответа, отметьте справа, если он правильный')
+        self.answer2 = QtWidgets.QTextEdit('Введите вариант ответа, отметьте справа, если он правильный')
+        self.answer3 = QtWidgets.QTextEdit('Введите вариант ответа, отметьте справа, если он правильный')
+        self.answer4 = QtWidgets.QTextEdit('Введите вариант ответа, отметьте справа, если он правильный')
         self.rightAnswer1 = QtWidgets.QCheckBox()
         self.rightAnswer2 = QtWidgets.QCheckBox()
         self.rightAnswer3 = QtWidgets.QCheckBox()
         self.rightAnswer4 = QtWidgets.QCheckBox()
+
+        self.buttonGroup = QtWidgets.QButtonGroup() # exclusive checkboxes
+        self.buttonGroup.addButton(self.rightAnswer1)
+        self.buttonGroup.addButton(self.rightAnswer2)
+        self.buttonGroup.addButton(self.rightAnswer3)
+        self.buttonGroup.addButton(self.rightAnswer4)
+
         self.previousQuestion = QtWidgets.QPushButton('Предыдущий вопрос')
         self.previousQuestion.clicked.connect(self.switchQuestion)
         self.previousQuestion.setEnabled(False)
@@ -90,7 +99,7 @@ class TestHost(QtWidgets.QWidget):
         self.hbox4.addWidget(self.nextQuestion)
         self.vbox = QtWidgets.QVBoxLayout()
         self.vbox.addStretch(1)
-        self.vbox.addWidget(self.questionNumber)
+        self.vbox.addWidget(self.questionNumberLabel)
         self.vbox.addWidget(self.enterQuestion)
         self.vbox.addLayout(self.hbox0)
         self.vbox.addLayout(self.hbox1)
@@ -103,16 +112,98 @@ class TestHost(QtWidgets.QWidget):
 
     def fullTestListCreation(self): #заполнение пробелами списка fullTest, количество пробелов = вопросы + ответы
         self.questionNumber = self.enterNumber.text()
-        if (self.questionNumber == 0) or (self.questionNumber == ''):
-            pass
+        if (self.questionNumber == 0) or (self.questionNumber == ''): #если ничего не введено, тест из двух вопросов
+            self.questionNumber = 2
+            for i in range(10):
+                if (i % 5) == 0:
+                    self.fullTest.append('Введите вопрос')
+                else:
+                    self.fullTest.append('Введите вариант ответа, отметьте справа, если он правильный')
+            self.howManyQuestions.hide()
         else:
             for i in range(int(self.questionNumber) * 5):
-                self.fullTest.append('')
+                if (i % 5) == 0:
+                    self.fullTest.append('Введите вопрос')
+                else:
+                    self.fullTest.append('Введите вариант ответа, отметьте справа, если он правильный')
             self.howManyQuestions.hide()
-            print(self.fullTest)
 
     def switchQuestion(self):
-        pass
+        sender = self.sender()
+        if sender == self.previousQuestion:
+            self.fillQuestion()
+            self.nowQuestion -= 1
+            self.questionNumberLabel.setText('<center>Вопрос № ' + str(self.nowQuestion + 1) + '</center>')
+            self.currentQuestion()
+            if self.nowQuestion == 0:
+                self.previousQuestion.setEnabled(False)
+                self.nextQuestion.setEnabled(True)
+            else:
+                self.nextQuestion.setEnabled(True)
+        else:
+            self.fillQuestion()
+            self.nowQuestion += 1
+            self.questionNumberLabel.setText('<center>Вопрос № ' + str(self.nowQuestion + 1) + '</center>')
+            self.currentQuestion()
+            if self.nowQuestion == int(self.questionNumber) - 1:
+                self.previousQuestion.setEnabled(True)
+                self.nextQuestion.setEnabled(False)
+            else:
+                self.previousQuestion.setEnabled(True)
+
+    def fillQuestion(self): #записать вопрос и ответы в список
+        question = self.enterQuestion.toPlainText()
+        enteredAnswer1 = self.answer1.toPlainText()
+        enteredAnswer2 = self.answer2.toPlainText()
+        enteredAnswer3 = self.answer3.toPlainText()
+        enteredAnswer4 = self.answer4.toPlainText()
+        fullTestPosition = self.nowQuestion * 5
+        self.fullTest[fullTestPosition] = question
+        if self.rightAnswer1.isChecked() == True:
+            self.fullTest[fullTestPosition + 1] = '!' + enteredAnswer1
+        else:
+            self.fullTest[fullTestPosition + 1] = enteredAnswer1
+        if self.rightAnswer2.isChecked() == True:
+            self.fullTest[fullTestPosition + 2] = '!' + enteredAnswer2
+        else:
+            self.fullTest[fullTestPosition + 2] = enteredAnswer2
+        if self.rightAnswer3.isChecked() == True:
+            self.fullTest[fullTestPosition + 3] = '!' + enteredAnswer3
+        else:
+            self.fullTest[fullTestPosition + 3] = enteredAnswer3
+        if self.rightAnswer4.isChecked() == True:
+            self.fullTest[fullTestPosition + 4] = '!' + enteredAnswer4
+        else:
+            self.fullTest[fullTestPosition + 4] = enteredAnswer4
+
+    def currentQuestion(self): #показать вопрос, если уже был заполнен
+        fullTestPosition = self.nowQuestion * 5
+        question = self.fullTest[fullTestPosition]
+        enteredAnswer1 = self.fullTest[fullTestPosition + 1]
+        enteredAnswer2 = self.fullTest[fullTestPosition + 2]
+        enteredAnswer3 = self.fullTest[fullTestPosition + 3]
+        enteredAnswer4 = self.fullTest[fullTestPosition + 4]
+        self.enterQuestion.setText(question)
+        if enteredAnswer1[0] == '!':
+            self.answer1.setText(enteredAnswer1[1:])
+            self.rightAnswer1.setChecked(True)
+        else:
+            self.answer1.setText(enteredAnswer1)
+        if enteredAnswer2[0] == '!':
+            self.answer2.setText(enteredAnswer2[1:])
+            self.rightAnswer2.setChecked(True)
+        else:
+            self.answer2.setText(enteredAnswer2)
+        if enteredAnswer3[0] == '!':
+            self.answer3.setText(enteredAnswer3[1:])
+            self.rightAnswer3.setChecked(True)
+        else:
+            self.answer3.setText(enteredAnswer3)
+        if enteredAnswer4[0] == '!':
+            self.answer4.setText(enteredAnswer4[1:])
+            self.rightAnswer4.setChecked(True)
+        else:
+            self.answer4.setText(enteredAnswer4)
 
     def finishCreation(self):
         pass
