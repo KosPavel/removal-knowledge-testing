@@ -35,7 +35,7 @@ class TestHost(QtWidgets.QWidget):
         self.infoEnterNumber = QtWidgets.QLabel('Введите количество вопросов в тесте')
         self.enterNumber = QtWidgets.QLineEdit()
         self.beginCreation = QtWidgets.QPushButton('Начать создание теста')
-        self.beginCreation.clicked.connect(self.createTest)
+        self.beginCreation.clicked.connect(self.fullTestListCreation)
 
         self.validateQuestionNumber = QtGui.QIntValidator() #проверка ввода числа
         self.enterNumber.setValidator(self.validateQuestionNumber)
@@ -49,8 +49,6 @@ class TestHost(QtWidgets.QWidget):
         self.howManyQuestions.show()
 
     def createTest(self):
-        self.fullTestListCreation()
-
         self.createTestWindow = QtWidgets.QWidget()
         self.createTestWindow.setWindowTitle("Создание теста")
         self.createTestWindow.resize(400,400)
@@ -58,10 +56,10 @@ class TestHost(QtWidgets.QWidget):
         self.questionNumberLabel = QtWidgets.QLabel()
         self.questionNumberLabel.setText('<center>Вопрос № ' + str(self.nowQuestion + 1) + '</center>')
         self.enterQuestion = QtWidgets.QTextEdit("Введите вопрос")
-        self.answer1 = QtWidgets.QTextEdit('Введите вариант ответа, отметьте справа, если он правильный')
-        self.answer2 = QtWidgets.QTextEdit('Введите вариант ответа, отметьте справа, если он правильный')
-        self.answer3 = QtWidgets.QTextEdit('Введите вариант ответа, отметьте справа, если он правильный')
-        self.answer4 = QtWidgets.QTextEdit('Введите вариант ответа, отметьте справа, если он правильный')
+        self.answer1 = QtWidgets.QTextEdit('Введите ответ, отметьте правильность')
+        self.answer2 = QtWidgets.QTextEdit('Введите ответ, отметьте правильность')
+        self.answer3 = QtWidgets.QTextEdit('Введите ответ, отметьте правильность')
+        self.answer4 = QtWidgets.QTextEdit('Введите ответ, отметьте правильность')
         self.rightAnswer1 = QtWidgets.QCheckBox()
         self.rightAnswer2 = QtWidgets.QCheckBox()
         self.rightAnswer3 = QtWidgets.QCheckBox()
@@ -79,7 +77,7 @@ class TestHost(QtWidgets.QWidget):
         self.nextQuestion = QtWidgets.QPushButton('Следующий вопрос')
         self.nextQuestion.clicked.connect(self.switchQuestion)
         self.finishTestCreation = QtWidgets.QPushButton('Завершить создание')
-        self.finishTestCreation.clicked.connect(self.switchQuestion)
+        self.finishTestCreation.clicked.connect(self.finishCreation)
 
         self.hbox0 = QtWidgets.QHBoxLayout()
         self.hbox1 = QtWidgets.QHBoxLayout()
@@ -112,21 +110,16 @@ class TestHost(QtWidgets.QWidget):
 
     def fullTestListCreation(self): #заполнение пробелами списка fullTest, количество пробелов = вопросы + ответы
         self.questionNumber = self.enterNumber.text()
-        if (self.questionNumber == 0) or (self.questionNumber == ''): #если ничего не введено, тест из двух вопросов
-            self.questionNumber = 2
-            for i in range(10):
-                if (i % 5) == 0:
-                    self.fullTest.append('Введите вопрос')
-                else:
-                    self.fullTest.append('Введите вариант ответа, отметьте справа, если он правильный')
-            self.howManyQuestions.hide()
+        if (self.questionNumber == '0') or (self.questionNumber == ''):
+            pass
         else:
             for i in range(int(self.questionNumber) * 5):
                 if (i % 5) == 0:
                     self.fullTest.append('Введите вопрос')
                 else:
-                    self.fullTest.append('Введите вариант ответа, отметьте справа, если он правильный')
+                    self.fullTest.append('Введите ответ, отметьте правильность')
             self.howManyQuestions.hide()
+            self.createTest()
 
     def switchQuestion(self):
         sender = self.sender()
@@ -206,7 +199,39 @@ class TestHost(QtWidgets.QWidget):
             self.answer4.setText(enteredAnswer4)
 
     def finishCreation(self):
-        pass
+        self.fillQuestion()
+        if self.checkTest() == False:
+            self.questionNumberLabel.setText('<center><b>Где-то не отмечен правильный ответ!</b><center>')
+        else:
+            fileTest = open('Test.txt', 'w')
+            for line in range(len(self.fullTest)):
+                fileTest.write(self.fullTest[line] + '\n')
+            fileTest.close()
+
+    # def warningWindow(self, warnText): #окно-предупреждение об ошибке НЕ РАБОТАЕТ
+    #     warningWindow = QtWidgets.QWidget()
+    #     warningWindow.setWindowTitle("Achtung!")
+    #     warningWindow.resize(100,100)
+    #     warningLabel = QtWidgets.QLabel()
+    #     warningLabel.setText(warnText)
+    #     vbox = QtWidgets.QVBoxLayout()
+    #     vbox.addWidget(warningLabel)
+    #     warningWindow.setLayout(vbox)
+    #     warningWindow.show()
+
+    def checkTest(self):
+        totalRightAnswers = 0
+        for i in range(len(self.fullTest)):
+            if self.fullTest[i][0] == '!':
+                totalRightAnswers += 1
+        if totalRightAnswers == int(self.questionNumber):
+            result = True
+        else:
+            result = False
+        print(self.questionNumber)
+        print(self.fullTest)
+        print(totalRightAnswers)
+        return result
 
     def loadTest(self):
         pass
